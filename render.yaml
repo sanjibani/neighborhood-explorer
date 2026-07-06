@@ -1,0 +1,35 @@
+# render.yaml — Render Blueprint (Infrastructure-as-Code)
+# One-click deploy: https://render.com/deploy?repo=https://github.com/sanjibani/neighborhood-explorer
+#
+# This file is read by Render when you connect the repo as a Blueprint.
+# All non-secret env vars are synced from here. LLM_API_KEY must be set
+# manually in the Render dashboard (sync: false).
+
+services:
+  - type: web
+    name: neighborhood-explorer
+    runtime: python
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: pip install --upgrade pip && pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.0
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MAX_LLM_CALLS_PER_DAY
+        value: "100"
+      - key: LLM_BASE_URL
+        value: https://api.minimax.io/v1
+      - key: LLM_MODEL
+        value: MiniMax-Text-01
+      - key: LLM_API_KEY
+        sync: false  # set manually in Render dashboard after first deploy
+      # Phase 7: add MAPS_BROWSER_KEY, MAPS_SERVER_KEY, SENTRY_DSN here when ready
