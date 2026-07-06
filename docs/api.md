@@ -22,7 +22,7 @@ GET /api/neighborhoods/search?q=maplew&city=austin
 | Query param | Type | Required | Notes |
 |---|---|---|---|
 | `q` | string | yes | Search query, min 2 chars |
-| `city` | string | no | Restrict to one city (PRD v0.1 is single-city; this param is for v0.2) |
+| `city` | string | no | Restrict to one city (PRD v0.1 is single-city Bangalore; this param is for v0.2) |
 
 ### Response (200)
 
@@ -30,20 +30,20 @@ GET /api/neighborhoods/search?q=maplew&city=austin
 {
   "results": [
     {
-      "id": "maplewood-austin-tx",
-      "name": "Maplewood",
-      "city": "Austin",
-      "state": "TX",
-      "lat": 30.289,
-      "lng": -97.742
+      "id": "indiranagar-bangalore-ka",
+      "name": "Indiranagar",
+      "city": "Bangalore",
+      "state": "KA",
+      "lat": 12.9784,
+      "lng": 77.6408
     },
     {
-      "id": "maple-ridge-austin-tx",
-      "name": "Maple Ridge",
-      "city": "Austin",
-      "state": "TX",
-      "lat": 30.301,
-      "lng": -97.755
+      "id": "koramangala-bangalore-ka",
+      "name": "Koramangala",
+      "city": "Bangalore",
+      "state": "KA",
+      "lat": 12.9352,
+      "lng": 77.6245
     }
   ]
 }
@@ -68,38 +68,38 @@ Fetch full neighborhood profile. Triggers AI vibe generation if cache expired.
 ### Request
 
 ```
-GET /api/neighborhoods/maplewood-austin-tx
+GET /api/neighborhoods/indiranagar-bangalore-ka
 ```
 
 ### Response (200)
 
 ```json
 {
-  "id": "maplewood-austin-tx",
-  "name": "Maplewood",
-  "city": "Austin",
-  "state": "TX",
-  "lat": 30.289,
-  "lng": -97.742,
-  "parks_score": 9.1,
-  "schools_score": 8.5,
-  "safety_score": 8.3,
+  "id": "indiranagar-bangalore-ka",
+  "name": "Indiranagar",
+  "city": "Bangalore",
+  "state": "KA",
+  "lat": 12.9784,
+  "lng": 77.6408,
+  "parks_score": 8.7,
+  "schools_score": 8.2,
+  "safety_score": 7.5,
   "parks_data": [
-    { "name": "Riverside Park", "distance_m": 480, "features": ["playground", "splash_pad", "restrooms"] },
-    { "name": "Maple Greenbelt", "distance_m": 720, "features": ["trails", "no_playground"] }
+    { "name": "Cubbon Park (edge)", "distance_m": 4200, "features": ["trails", "playground", "restrooms"] },
+    { "name": "Indiranagar Park", "distance_m": 600, "features": ["walking_path", "no_playground"] }
   ],
   "schools_data": [
-    { "name": "Maplewood Elementary", "rating": 8.5, "distance_m": 800, "grades_served": "K-5" },
-    { "name": "Lamar Middle School", "rating": 7.2, "distance_m": 1400, "grades_served": "6-8" }
+    { "name": "National Public School Indiranagar", "rating": 8.5, "distance_m": 900, "grades_served": "K-12" },
+    { "name": "Vidya Niketan School", "rating": 7.8, "distance_m": 1500, "grades_served": "1-10" }
   ],
   "safety_data": {
-    "violent_per_100k": 245,
-    "property_per_100k": 1820,
-    "traffic_incidents_per_year": 12,
+    "violent_per_100k": 180,
+    "property_per_100k": 920,
+    "traffic_incidents_per_year": 28,
     "year": 2025
   },
-  "vibe_short": "Quiet, family-oriented neighborhood with tree-lined streets and strong elementary schools.",
-  "vibe_full": "Maplewood is a quiet, family-oriented neighborhood in central Austin... (3 paragraphs)",
+  "vibe_short": "Leafy, family-oriented Bangalore neighborhood with strong schools and walkable parks.",
+  "vibe_full": "Indiranagar is a leafy, family-oriented neighborhood in east Bangalore... (3 paragraphs)",
   "vibe_generated_at": "2026-07-06T18:00:00Z"
 }
 ```
@@ -132,7 +132,7 @@ POST /api/compare
 Content-Type: application/json
 
 {
-  "neighborhood_ids": ["maplewood-austin-tx", "riverside-austin-tx", "oak-hill-austin-tx"],
+  "neighborhood_ids": ["indiranagar-bangalore-ka", "koramangala-bangalore-ka", "whitefield-bangalore-ka"],
   "weights": {
     "parks": 0.4,
     "schools": 0.35,
@@ -154,17 +154,17 @@ Content-Type: application/json
 {
   "ranking": [
     {
-      "neighborhood_id": "maplewood-austin-tx",
+      "neighborhood_id": "indiranagar-bangalore-ka",
       "score": 8.7,
-      "explanation": "Maplewood ranks highest because its parks score (9.1) and schools score (8.5) both exceed Riverside (8.5, 8.0) and Oak Hill (7.8, 7.2). With your weight split favoring parks + schools (0.75 combined), Maplewood's advantage in those areas gives it the top spot despite its safety score (8.3) being only marginally higher than the alternatives."
+      "explanation": "Indiranagar ranks highest because its parks score (8.7) and schools score (8.2) both exceed Koramangala (7.5, 8.0) and Whitefield (6.8, 7.2). With your weight split favoring parks + schools (0.75 combined), Indiranagar's advantage in those areas gives it the top spot despite its safety score (7.5) being lower than Whitefield (8.1)."
     },
     {
-      "neighborhood_id": "riverside-austin-tx",
+      "neighborhood_id": "koramangala-bangalore-ka",
       "score": 8.2,
       "explanation": "..."
     },
     {
-      "neighborhood_id": "oak-hill-austin-tx",
+      "neighborhood_id": "whitefield-bangalore-ka",
       "score": 7.5,
       "explanation": "..."
     }
@@ -224,7 +224,7 @@ Three endpoints. Clean. Each maps to a specific UI action: search → add → co
 ## What's NOT in the API (intentional, v0.1 scope)
 
 - `POST /api/neighborhoods/{id}/regenerate-vibe` — not exposed in v0.1; vibe regenerates automatically on cache miss. Can add in v0.2 if user feedback wants manual regen.
-- `GET /api/cities` — not needed; v0.1 is single-city (Austin). Add when multi-city lands.
+- `GET /api/cities` — not needed; v0.1 is single-city (Bangalore). Add when multi-city lands.
 - `POST /api/auth/login` — no auth in v0.1.
 - `GET /api/comparisons/history` — no persistence in v0.1.
 

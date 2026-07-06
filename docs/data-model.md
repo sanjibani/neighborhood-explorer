@@ -31,7 +31,13 @@ Three entities. Neighborhood is the only one persisted server-side; UserPrefs li
 
 ### Seed data (v0.1)
 
-v0.1 ships with ~10 hand-curated Austin neighborhoods (matching PRD scope: one city at a time). Seed file at `backend/data/neighborhoods_seed.json`. Phase 3 reads this on startup if the SQLite table is empty.
+v0.1 ships with ~10 hand-curated Bangalore neighborhoods (matching PRD scope: one city at a time). Candidates: Indiranagar, Koramangala, Whitefield, Jayanagar, HSR Layout, Malleshwaram, Banashankari, BTM Layout, JP Nagar, Marathahalli. Seed file at `backend/data/neighborhoods_seed.json`. Phase 3 reads this on startup if the SQLite table is empty.
+
+**Bangalore-specific data sourcing notes** (relevant for Phase 3 implementation, not data shape):
+
+- **Schools**: no GreatSchools equivalent for India. Use Google Places API for school POIs + Google Maps reviews as a quality proxy. Accept lower rating granularity than US data sources.
+- **Safety**: no open city-data portal for Bangalore crime stats (unlike US cities). For v0.1, derive from heuristics (lighting, traffic density from Places API "transit_station" count, foot-traffic from cafe density in inverse). For real production, partner with Karnataka State Police data or use a paid vendor.
+- **Parks**: Google Places API works globally; same code path as Austin would have used.
 
 ## Entity 2: UserPrefs (client-side, localStorage)
 
