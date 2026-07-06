@@ -1,0 +1,9 @@
+/* Minimal custom styles. Most styling is Tailwind via CDN. */
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+pre {
+  max-height: 320px;
+  overflow: auto;
+}

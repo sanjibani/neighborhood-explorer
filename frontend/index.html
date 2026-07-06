@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Neighborhood Explorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900">
+  <main class="container mx-auto px-6 py-24 max-w-3xl">
+    <header class="text-center space-y-4">
+      <p class="text-sm uppercase tracking-widest text-emerald-600 font-semibold">
+        AI-SDLC Learning Project
+      </p>
+      <h1 class="text-5xl md:text-6xl font-bold tracking-tight">
+        Neighborhood Explorer
+      </h1>
+      <p class="text-lg text-slate-600 max-w-xl mx-auto">
+        Compare neighborhoods on the map — vibe, commute, walkability. Built end-to-end through an agent-driven AI-SDLC pipeline.
+      </p>
+    </header>
+
+    <section class="mt-12 p-6 bg-white rounded-2xl shadow-sm border border-slate-200">
+      <h2 class="text-sm uppercase tracking-widest text-slate-500 font-semibold mb-3">
+        Phase 0 — Foundation check
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Frontend served (this page)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>API health check</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>MiniMax LLM wired</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span>Google Maps (Phase 2+)</span>
+        </div>
+      </div>
+      <button
+        id="echo-btn"
+        class="mt-6 w-full md:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium transition disabled:opacity-50"
+      >
+        Test MiniMax round-trip
+      </button>
+      <pre id="echo-out" class="hidden mt-4 p-4 bg-slate-50 rounded-lg text-xs font-mono whitespace-pre-wrap border border-slate-200"></pre>
+    </section>
+
+    <footer class="mt-16 text-center text-sm text-slate-500">
+      Phase 0 of 8 &middot; Plan in <a href="https://github.com/sanjibani/neighborhood-explorer/blob/main/PLAN.md" class="underline hover:text-slate-700">PLAN.md</a>
+    </footer>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
