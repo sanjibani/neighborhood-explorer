@@ -697,10 +697,10 @@ The **pattern** is the constant. The **vendor URL** is the variable. This is the
 
 | Phase | Status | Notes |
 |---|---|---|
-| 0 — Foundations & deploy skeleton | not started | |
-| 1 — Requirements & spec | not started | |
-| 2 — Design with Penpot MCP | not started | |
-| 3 — AI code generation | not started | |
+| 0 — Foundations & deploy skeleton | **done** | Live at neighborhood-explorer.onrender.com. Render Blueprint via render.yaml. All endpoints 200. |
+| 1 — Requirements & spec | **done** | 4 docs (PRD, design, data-model, API) + LEARNING_NOTES. Persona: 35yo parent, Bangalore, Trigger A, tabs layout. |
+| 2 — Design with Penpot MCP | **done** | Screen 1 (Shortlist) + Screen 2 (Compare) in Penpot. Screenshots + build code + design tokens JSON in repo. |
+| 3 — AI code generation | not started | Reads design tokens + SDD docs as prompt context. |
 | 4 — AI code review + security scan | not started | |
 | 5 — Test pyramid | not started | |
 | 6 — CI/CD pipeline | not started | |
