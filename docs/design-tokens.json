@@ -1,0 +1,140 @@
+{
+  "meta": {
+    "$schema": "https://design-tokens.github.io/community-group/format/",
+    "name": "Neighborhood Explorer",
+    "version": "0.1.0",
+    "description": "Design tokens extracted from Penpot design (Phase 2d). Consumed by Phase 3 agent to generate matching HTML/CSS. Updates flow from Penpot MCP → this file → generated code.",
+    "extracted": "2026-07-08",
+    "extractionMethod": "Penpot MCP execute_code walking all shape properties and aggregating fills/strokes/typography"
+  },
+
+  "color": {
+    "$description": "Single source of truth for all colors. Slate palette for neutrals, emerald primary, sky/amber for category-specific accents. Extracted values match Tailwind default palette.",
+
+    "primary": {
+      "DEFAULT": { "$value": "#059669", "$description": "Emerald 600 — primary CTA, active tab, #1 ranking" },
+      "hover": { "$value": "#047857", "$description": "Emerald 700 — hover state (future)" }
+    },
+
+    "neutral": {
+      "50":  { "$value": "#F8FAFC", "$description": "Page background" },
+      "100": { "$value": "#F1F5F9", "$description": "Inactive tab bg, hover bg" },
+      "200": { "$value": "#E2E8F0", "$description": "Borders, disabled button bg, divider" },
+      "300": { "$value": "#CBD5E1", "$description": "Form input border" },
+      "400": { "$value": "#94A3B8", "$description": "Muted text (placeholder, disabled)" },
+      "500": { "$value": "#64748B", "$description": "Secondary label text" },
+      "600": { "$value": "#475569", "$description": "Secondary text (subtitle)" },
+      "900": { "$value": "#0F172A", "$description": "Primary text (headings, body)" }
+    },
+
+    "accent": {
+      "parks":   { "$value": "#059669", "$description": "Parks score bar (matches primary — different hue variant if needed)" },
+      "schools": { "$value": "#0EA5E9", "$description": "Sky 500 — Schools score bar" },
+      "safety":  { "$value": "#F59E0B", "$description": "Amber 500 — Safety score bar" }
+    },
+
+    "semantic": {
+      "background":      { "$value": "{color.neutral.50}" },
+      "surface":         { "$value": "#FFFFFF", "$description": "Card, button bg, panel" },
+      "surfaceAlt":      { "$value": "{color.neutral.100}" },
+      "border":          { "$value": "{color.neutral.200}" },
+      "borderInput":     { "$value": "{color.neutral.300}" },
+      "text": {
+        "primary":   { "$value": "{color.neutral.900}" },
+        "secondary": { "$value": "{color.neutral.600}" },
+        "muted":     { "$value": "{color.neutral.400}" },
+        "onPrimary": { "$value": "#FFFFFF" }
+      }
+    }
+  },
+
+  "spacing": {
+    "$description": "4px base unit. Tailwind-aligned scale. Use these for padding, gap, margin, position offsets in generated CSS.",
+
+    "1":  { "$value": "4px",   "$description": "Tight inline spacing" },
+    "2":  { "$value": "8px",   "$description": "Half-step" },
+    "3":  { "$value": "12px",  "$description": "Compact gaps (e.g. tight card padding)" },
+    "4":  { "$value": "16px",  "$description": "Body rhythm, section gaps" },
+    "5":  { "$value": "20px",  "$description": "Card padding (use 5 or 6 depending on density)" },
+    "6":  { "$value": "24px",  "$description": "Card padding (more breathable)" },
+    "7":  { "$value": "28px",  "$description": "Card padding (most breathable — our default)" },
+    "8":  { "$value": "32px",  "$description": "Inter-section gaps" },
+    "10": { "$value": "40px",  "$description": "Hero spacing" },
+    "12": { "$value": "48px",  "$description": "Section padding (compact)" },
+    "16": { "$value": "64px",  "$description": "Section padding (default)" },
+    "20": { "$value": "80px",  "$description": "Section padding (breathable)" }
+  },
+
+  "radius": {
+    "$description": "Border radius scale.",
+
+    "sm":    { "$value": "8px",  "$description": "Inputs, buttons" },
+    "md":    { "$value": "10px", "$description": "Buttons, search input" },
+    "lg":    { "$value": "12px", "$description": "Cards, panels" },
+    "pill":  { "$value": "9999px", "$description": "Score badges, remove buttons" }
+  },
+
+  "typography": {
+    "$description": "Font sizes and weights. NOTE: Only weights 300, 400, 700 are reliably available in Penpot's font set — agents generating Tailwind CSS should restrict to these weights to stay consistent with the design source.",
+
+    "fontFamily": { "$value": "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", "$description": "System font stack — fast, accessible, no external load" },
+
+    "size": {
+      "xs":   { "$value": "12px" },
+      "sm":   { "$value": "14px", "$description": "Body small, buttons (compact)" },
+      "md":   { "$value": "16px", "$description": "Body, inputs, default button" },
+      "lg":   { "$value": "18px", "$description": "Card name, table column header" },
+      "h3":   { "$value": "28px", "$description": "Section title (e.g. Compare)" },
+      "h2":   { "$value": "36px", "$description": "Page title (e.g. Neighborhood Explorer)" }
+    },
+
+    "weight": {
+      "regular":  { "$value": "400" },
+      "semibold": { "$value": "700", "$description": "Headings, buttons, labels — Penpot's strongest reliable weight" },
+      "light":    { "$value": "300" }
+    },
+
+    "lineHeight": {
+      "tight":   { "$value": "1.2" },
+      "normal":  { "$value": "1.5" }
+    },
+
+    "scale": {
+      "pageTitle":    { "size": "{typography.size.h2}",    "weight": "{typography.weight.semibold}" },
+      "sectionTitle": { "size": "{typography.size.h3}",    "weight": "{typography.weight.semibold}" },
+      "cardName":     { "size": "{typography.size.lg}",    "weight": "{typography.weight.semibold}" },
+      "bodyEmphasis": { "size": "{typography.size.md}",    "weight": "{typography.weight.semibold}" },
+      "body":         { "size": "{typography.size.md}",    "weight": "{typography.weight.regular}" },
+      "bodySmall":    { "size": "{typography.size.sm}",    "weight": "{typography.weight.regular}" },
+      "label":        { "size": "{typography.size.xs}",    "weight": "{typography.weight.semibold}" },
+      "button":       { "size": "{typography.size.md}",    "weight": "{typography.weight.semibold}" }
+    }
+  },
+
+  "shadow": {
+    "$description": "Subtle shadows for elevation. Not heavily used in v0.1 but available for cards, modals, dropdowns.",
+
+    "sm": { "$value": "0 1px 2px 0 rgb(0 0 0 / 0.05)" },
+    "md": { "$value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)" }
+  },
+
+  "breakpoints": {
+    "$description": "Responsive breakpoints. v0.1 is desktop-only per PRD non-goals; included for v0.2.",
+
+    "mobile":  { "$value": "640px" },
+    "tablet":  { "$value": "768px" },
+    "desktop": { "$value": "1024px" },
+    "wide":    { "$value": "1280px" }
+  },
+
+  "zIndex": {
+    "$description": "Stacking order. Map controls and modals will need these in v0.2.",
+
+    "base":     { "$value": "0" },
+    "dropdown": { "$value": "10" },
+    "sticky":   { "$value": "20" },
+    "overlay":  { "$value": "30" },
+    "modal":    { "$value": "40" },
+    "tooltip":  { "$value": "50" }
+  }
+}
