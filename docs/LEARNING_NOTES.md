@@ -449,4 +449,272 @@ When we move to Phase 3 (code generation), Mavis will:
 ## 15. Update log
 
 - 2026-07-06: Initial creation. Captured learnings from Phases 0-2 of neighborhood-explorer build.
+- 2026-07-08: Phase 3 patterns — models, cache, LLM, anti-hallucination (added below).
+
+---
+
+# Phase 3 patterns (added 2026-07-08)
+
+## 16. SDD build order: docs → models → services → routes → wire
+
+Always this order. Each layer depends on the previous:
+
+```
+docs/                 ← Spec (Phase 1)
+  ↓
+backend/models/       ← Pydantic contracts (3.1)
+  ↓
+backend/services/     ← Persistence + LLM (3.2, 3.4)
+  ↓
+backend/routes/       ← HTTP endpoints (3.5)
+  ↓
+backend/data/*.json   ← Pre-baked fixtures (3.6)
+  ↓
+backend/main.py       ← Wire-up + lifespan (3.7)
+```
+
+**Why this order**: each layer is testable in isolation. Models can be unit-tested without services. Services can be tested without routes. Routes can be mocked without backend. Wire-up at the end pulls everything together.
+
+**Anti-pattern**: writing routes first, then services, then "oh I need a model for this". Cascading refactors.
+
+## 17. Pydantic Field(description=) is your auto-generated API doc
+
+```python
+parks_score: float = Field(..., ge=0, le=10, description="Composite: count + walking-distance + kid-features")
+```
+
+Three things happen at once:
+1. **Validation enforced** — `ge=0, le=10` rejects bad input at runtime
+2. **Type hints for IDEs** — `nb.parks_score` autocompletes
+3. **OpenAPI schema** — FastAPI auto-builds `/docs` Swagger UI with these descriptions
+
+**No separate API doc to maintain**. The descriptions ARE the documentation. This is how Stripe, Twilio, and every well-built FastAPI service does it.
+
+**Nested types, not dicts**: `parks_data: list[ParkItem]` over `parks_data: list[dict]`. Costs more lines but gives type safety at every layer.
+
+**Variant creation**: `n.model_copy(update={'id': 'X'})` for tests and overrides. Doesn't mutate the original.
+
+## 18. JSON-blob storage pattern (and when to use it)
+
+```sql
+CREATE TABLE neighborhood_cache (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,        -- WHOLE Neighborhood serialized as JSON
+    cached_at TEXT NOT NULL
+);
+```
+
+**When this works**: 10s-1000s of rows, simple queries, infrequent schema changes. Read is one query; write is one query. No joins.
+
+**When this doesn't work**: millions of rows, complex query patterns (e.g., "find neighborhoods near this lat/lng with parks_score > 7"). Then you need Postgres + JSONB + spatial indexes.
+
+**Migration path**: when scaling, move to Postgres. JSONB columns have the same JSON-blob UX but with proper indexes.
+
+## 19. SQLite JSON1 for queryable JSON columns
+
+```sql
+SELECT data FROM neighborhood_cache
+WHERE LOWER(json_extract(data, '$.name')) LIKE ?
+ORDER BY json_extract(data, '$.name')
+LIMIT ?
+```
+
+**The bug pattern**: agents forget that JSON is the column and properties are extracted. First version referenced `WHERE LOWER(name) LIKE ?` which errored: "no such column: name". Always use `json_extract(data, '$.field')`.
+
+**Always smoke-test SQL against JSON columns** — the error is at runtime, not compile time.
+
+## 20. Separation of concerns: cache vs LLM vs route
+
+```
+cache.py  — persistence (does one thing: store + retrieve Neighborhood)
+llm.py    — generation (does one thing: text in → text out)
+routes/   — orchestration (composes cache + LLM)
+```
+
+Each layer imports only what it needs. Cache doesn't import LLM. LLM doesn't import cache. Routes import both.
+
+**Why it matters**:
+- Easy to test each layer in isolation
+- Easy to swap implementations (SQLite → Postgres, MiniMax → Claude)
+- Easy to reason about (each layer has one job)
+
+**Anti-pattern**: routes import cache + LLM directly + do "smart" things like "if cache miss, fall back to LLM". That's orchestration logic, belongs in routes.
+
+## 21. Anti-hallucination prompt pattern
+
+Every LLM prompt we wrote has 3 sections:
+
+```
+1. ROLE / TASK
+   "Generate a ~15-word tagline for {X}, optimized for a 35-year-old parent..."
+
+2. DATA (ground truth the LLM is allowed to use)
+   "- Parks: 8.7/10
+    - Schools: 8.2/10
+    - NPS Indiranagar (900m, rated 8.5/10)
+    - violent 180/100k, property 920/100k"
+
+3. CONSTRAINTS (anti-hallucination rules)
+   "- Maximum 15 words
+    - DO NOT invent specific facts (no park names, no crime stats)
+    - Return only the tagline, no preamble"
+```
+
+**The "no preamble" rule**: without it, the LLM might say "Sure! Here's a tagline for..." — requiring post-processing. With it, the LLM returns directly usable text. The route layer assigns the string to `vibe_short` directly.
+
+**Temperature knobs**:
+- `0.7` — creative writing (vibes)
+- `0.5` — factual summaries (ranking explanations)
+- `1.0+` — brainstorming, ideation
+
+## 22. Graceful degradation with deterministic fallbacks
+
+```python
+def generate_ranking_explanation(...) -> str:
+    try:
+        text = complete(prompt, ...).strip()
+        return text
+    except Exception:
+        # PURE MATH FALLBACK — no LLM needed, cites real data
+        return f"{target.name} received {computed_score:.1f}/10 based on weights..."
+```
+
+When the LLM fails (rate limit, API down, key invalid), the user **still gets an answer**. The fallback isn't a bug — it's a production feature.
+
+**Pattern**: fallback should cite real data, not generic text. Honesty over polish.
+
+**Where this came from**: Netflix Hystrix, AWS retry libraries, Stripe webhooks. Fallback is part of the API contract, not an afterthought.
+
+## 23. Vibe TTL pattern: cache layer says "expired", route regenerates
+
+```python
+@staticmethod
+def is_vibe_expired(neighborhood: Neighborhood, ttl_days: int = 7) -> bool:
+    age = datetime.now(timezone.utc) - neighborhood.vibe.vibe_generated_at
+    return age > timedelta(days=ttl_days)
+```
+
+The cache layer **doesn't know about the LLM**. It just tells you "expired or not".
+
+Route then orchestrates:
+```python
+nb = cache.get(id)
+if cache.is_vibe_expired(nb):
+    new_short, new_full = llm.generate_neighborhood_vibe(nb)
+    nb_new = nb.model_copy(update={"vibe": VibeData(vibe_short=new_short, vibe_full=new_full, vibe_generated_at=now)})
+    cache.upsert(nb_new)
+    nb = nb_new
+return nb
+```
+
+This is the **engineering version of "separation of concerns"**. Each layer has one job.
+
+## 24. SDD numeric scores vs LLM explanations
+
+For ranking, the **numeric score is computed deterministically** (pure math). The LLM only writes the explanation text. The LLM **cannot reorder** the neighborhoods based on vibes.
+
+```python
+score = (parks_score * w.parks) + (schools_score * w.schools) + (safety_score * w.safety)
+ranking = sorted(neighborhoods, key=lambda n: computed_score, reverse=True)
+# Then LLM explains each RankEntry, citing the actual numeric score
+```
+
+**The architecture prevents hallucination**. The agent can't say "Whitefield should rank higher" because the ranking is fixed before the LLM call.
+
+## 25. Manual smoke tests during AI-build phase
+
+```python
+# Inline smoke test pattern
+.venv/bin/python -c "
+from backend.models.neighborhood import Neighborhood, ...
+from backend.services.cache import NeighborhoodCache
+
+n = Neighborhood(id='test', name='Test', ...)
+cache = NeighborhoodCache(db_path='/tmp/test.db')
+cache.upsert(n)
+fetched = cache.get('test')
+print('Roundtrip:', fetched.id, fetched.name)
+# ... exercise every method ...
+cache.clear()
+import os; os.remove('/tmp/test.db')
+"
+```
+
+**Cost**: 30 sec per file.
+**Catches**: ~1 bug per 5-10 files.
+**Replaced in Phase 5**: by proper pytest.
+
+When the smoke test catches something, you see the error **at write time, not at runtime**. That's the difference between 30 seconds and hours of debugging.
+
+## 26. BUG PATTERNS caught during Phase 3
+
+| Bug | Symptom | Fix | Lesson |
+|---|---|---|---|
+| SQL `WHERE LOWER(name) LIKE ?` | "no such column: name" | `json_extract(data, '$.name')` | JSON columns need explicit extraction |
+| Shell-escaped `\$` in JSON path | "bad JSON path" | Use single-quoted Python inside double-quoted shell | Bash `$` escaping requires care |
+| Missing `LLM_API_KEY` (test env) | _get_client throws | try/except with deterministic fallback | Fallbacks aren't bugs — they're production features |
+| Phase 2 Penpot `paddingTop` (no-op) | content hugging edges | API uses `topPadding`, not `paddingTop` | API property names sometimes don't match intuition; check API docs explicitly |
+| Phase 0 missing button text | screenshot review caught it | Always add text labels to buttons, not just colored rects | Agents write code that parses; humans see if it renders correctly |
+
+**Meta-lesson**: 90% of AI-SDLC bugs are caught by humans actually looking at the output, not by linters/tests. Visual review is irreplaceable.
+
+## 27. The agent self-healing loop spectrum
+
+The "does the agent fix until right" question has 4 levels:
+
+| Level | Mechanism | When to use |
+|---|---|---|
+| 1. **Smart smoke test** (what we do) | Single agent: write → run smoke → if fail, fix → re-run | Solo / learning / prototyping |
+| 2. **Pytest + CI loop** (Phase 5+) | Agent commits → CI runs → agent reads CI failure → fixes → re-pushes | Small team / weekly deploys |
+| 3. **Verifier agent** (separate from writer) | Writer agent + separate verifier agent in feedback loop | Production enterprise teams |
+| 4. **Reflection loop** (agent reviews own work in second role) | Same agent, switches role: "review this code against spec.md, find issues, fix" | Critical systems (healthcare, finance) |
+
+**What NONE of these catch**: visual / design issues. Only humans see those.
+
+**Industry examples**:
+- Anthropic Claude Code — built-in verifier pass
+- Cursor Composer mode — multi-step verification
+- Cognition Devin — separate planning + execution agents
+- LangChain reflection agents — runtime reflection patterns
+
+For our learning project, level 1 (smart smoke tests) is production-adequate. Move to level 2 in Phase 5, level 3+ when you scale to multi-agent workflows.
+
+---
+
+## 28. The runtime flow when fully wired (preview)
+
+User: clicks "Compare" on 3 neighborhoods (Indiranagar, Koramangala, Whitefield)
+   ↓
+Frontend: POST /api/compare with {neighborhood_ids, weights}
+   ↓
+Route (neighborhoods.compare):
+  1. For each ID: cache.get(id) → 3 Neighborhoods
+  2. Compute deterministic score per neighborhood:
+     score = parks * w.parks + schools * w.schools + safety * w.safety
+  3. Sort by score desc → [Indiranagar, Koramangala, Whitefield]
+  4. For each: llm.generate_ranking_explanation(target, weights, score, others)
+     → 3 LLM round-trips, ~3.6K tokens total
+  5. Return RankingResult JSON
+   ↓
+Frontend: renders ranking with score badges + LLM explanations
+
+**Key insight**: numeric score = math. Explanation = LLM. The LLM cannot reorder results. Architecture prevents hallucination.
+
+---
+
+## References for Phase 3 patterns
+
+- **Pydantic v2 docs** — [docs.pydantic.dev](https://docs.pydantic.dev/)
+- **SQLite JSON1 extension** — [sqlite.org/json1.html](https://www.sqlite.org/json1.html)
+- **Anthropic structured prompting** — anti-hallucination playbook
+- **Chip Huyen — AI Engineering** — Chapter 8 on RAG & grounding (covers the "pass data into prompt" pattern)
+
+---
+
+## 16. Update log
+
+(updated entries)
+
+- 2026-07-06: Initial creation. Captured learnings from Phases 0-2 of neighborhood-explorer build.
+- 2026-07-08: Phase 3 patterns added (sections 16-28). SDD build order, Pydantic Field descriptions, JSON-blob storage, JSON1 query pattern, cache/LLM/route separation, anti-hallucination prompts, graceful degradation, vibe TTL pattern, SDD numeric vs LLM, smoke test pattern, bug patterns, agent self-healing loop spectrum.
 - (Add new entries as we discover more.)
