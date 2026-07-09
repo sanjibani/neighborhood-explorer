@@ -3,13 +3,13 @@ Pydantic models for the Neighborhood entity.
 
 This file maps 1:1 to docs/data-model.md (the SDD contract).
 Every field's description becomes part of the OpenAPI schema
-(/docs on the running server) — that IS the auto-generated API doc.
+(/docs on the running server): that IS the auto-generated API doc.
 
 Used by:
-- routes/neighborhoods.py — request/response typing
-- routes/compare.py — references Neighborhood.id for matching
-- services/cache.py — SQLite persistence layer
-- services/llm.py — vibe-generation prompt template
+- routes/neighborhoods.py: request/response typing
+- routes/compare.py: references Neighborhood.id for matching
+- services/cache.py: SQLite persistence layer
+- services/llm.py: vibe-generation prompt template
 """
 from datetime import datetime
 
@@ -83,7 +83,7 @@ class Neighborhood(BaseModel):
     lat: float = Field(..., ge=-90, le=90, description="Latitude")
     lng: float = Field(..., ge=-180, le=180, description="Longitude")
 
-    # Composite scores — pre-computed, not derived per request (quotas concern)
+    # Composite scores: pre-computed, not derived per request (quotas concern)
     parks_score: float = Field(..., ge=0, le=10, description="Composite: count + walking-distance + kid-features")
     schools_score: float = Field(..., ge=0, le=10, description="Composite: count + ratings + walking-distance")
     safety_score: float = Field(..., ge=0, le=10, description="Composite: crime stats + traffic + pedestrian safety")
@@ -96,7 +96,7 @@ class Neighborhood(BaseModel):
     # AI vibe (cached)
     vibe: VibeData
 
-    # Status flag — True once all required fields are populated
+    # Status flag: True once all required fields are populated
     cached: bool = Field(
         default=False,
         description="True when all scores, detail data, AND vibe are present. Used by routes to decide whether to enrich on read.",

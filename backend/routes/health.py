@@ -1,4 +1,4 @@
-"""Health check endpoints — basic liveness and readiness."""
+"""Health check endpoints: basic liveness and readiness."""
 import os
 
 from fastapi import APIRouter
@@ -17,7 +17,7 @@ async def health():
 
 @router.get("/api/health/deep")
 async def health_deep():
-    """Deep health — verifies external service config is present (Phase 7 pings them too)."""
+    """Deep health: verifies external service config is present (Phase 7 pings them too)."""
     maps_browser = os.getenv("MAPS_BROWSER_KEY", "")
     maps_server = os.getenv("MAPS_SERVER_KEY", "")
     return {

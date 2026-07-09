@@ -7,7 +7,7 @@ Why structured logs?
 - Easy to filter, search, alert on specific fields.
 - Request IDs let you trace a single request across the stack.
 
-This is the observability backbone — Phase 7 wires Sentry on top.
+This is the observability backbone. Phase 7 wires Sentry on top.
 """
 import logging
 import os

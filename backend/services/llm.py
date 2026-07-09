@@ -1,7 +1,7 @@
 """
 MiniMax LLM client.
 
-API base URL: https://api.minimax.io/v1  (NOT api.minimax.chat — that's the Chinese service).
+API base URL: https://api.minimax.io/v1  (NOT api.minimax.chat - that's the Chinese service).
 OpenAI-compatible SDK. Default model: MiniMax-Text-01.
 
 Coding-plan keys are scoped to development use; respect rate limits.
@@ -76,7 +76,7 @@ def _build_vibe_short_prompt(neighborhood) -> str:
 
     The prompt has 3 sections:
       1. ROLE / task description
-      2. DATA passed in (ground truth — what the model can use)
+      2. DATA passed in (ground truth: what the model can use)
       3. CONSTRAINTS (anti-hallucination rules)
     """
     return (
@@ -194,7 +194,7 @@ def generate_neighborhood_vibe(neighborhood) -> tuple[str, str]:
         return short, full
     except Exception as exc:
         log.warning("llm.vibe.failed", id=neighborhood.id, error=str(exc))
-        # Honest fallback — generic, no fabricated facts
+        # Honest fallback: generic, no fabricated facts
         short = f"Family-friendly area in {neighborhood.city}."
         full = (
             f"{neighborhood.name} is a neighborhood in {neighborhood.city}. "

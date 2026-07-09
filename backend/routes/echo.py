@@ -1,4 +1,4 @@
-"""/api/echo-llm — Phase 0 endpoint to verify MiniMax wiring works end-to-end."""
+"""/api/echo-llm: Phase 0 endpoint to verify MiniMax wiring works end-to-end."""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 

@@ -19,7 +19,7 @@ class RankEntry(BaseModel):
         parks_score × parks + schools_score × schools + safety_score × safety
     Rounded to 1 decimal place.
 
-    `explanation` is LLM-generated with the actual scores as input — citing
+    `explanation` is LLM-generated with the actual scores as input, citing
     numbers it can't fabricate (per the prompt strategy in docs/api.md).
     """
     neighborhood_id: str = Field(..., description="The neighborhood's id")
@@ -34,7 +34,7 @@ class RankingResult(BaseModel):
     """The full POST /api/compare response body.
 
     Note: ranking is NOT persisted server-side (per data-model.md, no DB table).
-    Recomputed each request — cheap, and avoids 'stale ranking' UX confusion.
+    Recomputed each request: cheap, and avoids 'stale ranking' UX confusion.
     """
     ranking: list[RankEntry] = Field(..., description="Ordered best-first; length matches request's neighborhood_ids")
     weights_used: Weights = Field(..., description="Echoed back for client confirmation")
